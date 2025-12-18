@@ -11,10 +11,23 @@
     body { font-family: system-ui, -apple-system, sans-serif; background: #f5f5f5; }
     .panel { background: white; }
     .row-hover { background-color: rgb(249 250 251); }
+    .notes-editor {
+      display: block;
+      width: 100%;
+      min-width: max-content;
+      white-space: pre;
+      border: 1px solid rgb(209 213 219);
+      border-radius: 0.25rem;
+      padding: 0.25rem 0.5rem;
+      line-height: 1.25rem;
+      background: white;
+    }
+    .notes-editor:focus { outline: 2px solid transparent; outline-offset: 2px; box-shadow: 0 0 0 2px rgb(59 130 246 / 0.35); }
+    .notes-editor:empty::before { content: attr(data-placeholder); color: rgb(156 163 175); }
   </style>
 </head>
 <body class="min-h-screen p-5 md:p-10 text-gray-900">
-  <main class="max-w-6xl mx-auto space-y-5">
+  <main class="w-full space-y-5">
     <header class="panel rounded p-4 md:p-6 border border-gray-300 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
       <div>
         <p class="text-xs uppercase text-gray-600">Net atelier</p>
@@ -29,16 +42,16 @@
 
     <section class="panel rounded p-4 border border-gray-300">
       <div class="overflow-auto">
-        <table class="min-w-full text-sm">
+        <table class="min-w-full w-max table-auto text-sm">
           <thead class="text-xs uppercase text-gray-600">
             <tr id="thead-row">
               <th class="px-2 py-2 text-left">Notes</th>
-              <th class="px-2 py-2 text-left">Subnet</th>
-              <th class="px-2 py-2 text-left">Range</th>
-              <th class="px-2 py-2 text-left">Useable</th>
-              <th class="px-2 py-2 text-left">Hosts</th>
-              <th class="px-2 py-2 text-left">Divide</th>
-              <th class="px-2 py-2 text-left" id="join-header">Join</th>
+              <th class="px-2 py-2 text-left whitespace-nowrap">Subnet</th>
+              <th class="px-2 py-2 text-left whitespace-nowrap">Range</th>
+              <th class="px-2 py-2 text-left whitespace-nowrap">Useable</th>
+              <th class="px-2 py-2 text-left whitespace-nowrap">Hosts</th>
+              <th class="px-2 py-2 text-left whitespace-nowrap">Divide</th>
+              <th class="px-2 py-2 text-left whitespace-nowrap" id="join-header">Join</th>
             </tr>
           </thead>
           <tbody id="calcbody" class="divide-y divide-gray-200"></tbody>
@@ -277,12 +290,14 @@
         tr.className = rowClass;
 
         const noteTd = document.createElement('td');
-        noteTd.className = 'px-2 py-2';
-        const input = document.createElement('input');
-        input.value = row.label || '';
-        input.className = 'w-full rounded border border-gray-300 text-sm px-2 py-1';
-        input.oninput = (e) => { row.label = e.target.value; updateSummary(); saveState(); };
-        noteTd.appendChild(input);
+        noteTd.className = 'px-2 py-2 whitespace-nowrap';
+        const editor = document.createElement('div');
+        editor.className = 'notes-editor text-sm';
+        editor.contentEditable = 'true';
+        editor.dataset.placeholder = 'notes';
+        editor.textContent = row.label || '';
+        editor.oninput = () => { row.label = editor.textContent; updateSummary(); saveState(); };
+        noteTd.appendChild(editor);
 
         const subnetTd = document.createElement('td');
         subnetTd.className = 'px-2 py-2 whitespace-nowrap font-semibold';
@@ -297,11 +312,11 @@
         usableTd.textContent = usableRange(row.start, row.prefix);
 
         const hostsTd = document.createElement('td');
-        hostsTd.className = 'px-2 py-2';
+        hostsTd.className = 'px-2 py-2 whitespace-nowrap';
         hostsTd.textContent = networkSize(row.prefix);
 
         const divideTd = document.createElement('td');
-        divideTd.className = 'px-2 py-2';
+        divideTd.className = 'px-2 py-2 whitespace-nowrap';
         const divideBtn = document.createElement('button');
         divideBtn.className = 'text-blue-600 hover:underline';
         divideBtn.textContent = 'Divide';
@@ -324,7 +339,7 @@
           } else if (groupsByPrefix[prefix]) {
             const group = groupsByPrefix[prefix];
             const joinTd = document.createElement('td');
-            joinTd.className = `px-2 py-2 border-l border-gray-300 text-center cursor-pointer ${rowClass}`;
+            joinTd.className = `px-2 py-2 whitespace-nowrap border-l border-gray-300 text-center cursor-pointer ${rowClass}`;
             joinTd.rowSpan = group.count;
             joinTd.innerHTML = `<span class="text-blue-600 font-semibold">/${group.targetPrefix}</span>`;
             joinTd.onclick = () => joinGroup(group.startIdx, group.count, group.targetPrefix, group.targetStart);
@@ -333,7 +348,7 @@
             activeJoinCells[prefix] = joinTd;
           } else {
             const emptyTd = document.createElement('td');
-            emptyTd.className = 'px-2 py-2';
+            emptyTd.className = 'px-2 py-2 whitespace-nowrap';
             tr.appendChild(emptyTd);
             activeJoinCells[prefix] = null;
           }
